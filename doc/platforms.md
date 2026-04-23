@@ -21,21 +21,27 @@ Design: one small **idle** module per OS (see `src/idle/`), same CLI and tray UX
 - Targets **system** idle sleep, not necessarily display power-off; display policy is separate from IOPM assertions.
 - Sandboxed or restricted environments may limit power assertions — run like a normal user app from the terminal or a launcher.
 
-## Linux (planned)
+## Linux (implemented)
 
-Linux has no single “sleep” API like macOS IOPM; behavior depends on **systemd**, **logind**, **desktop session** (X11 vs Wayland), and **idle monitors**.
+**Idle sleep**
 
-Likely directions (to be chosen and implemented in `src/linux.rs` or similar):
+- [systemd-logind](https://www.freedesktop.org/software/systemd/man/latest/org.freedesktop.login1.html) D-Bus `Inhibit` call with `what=idle`, `mode=block` — same scope as macOS's `PreventUserIdleDisplaySleep` (does not block explicit `systemctl suspend`).
+- The inhibitor file descriptor is held open for the process lifetime (via `zbus` blocking API). Closing it — including on crash — automatically releases the lock.
 
-| Mechanism | Role |
-|-----------|------|
-| `systemd-inhibit` / Inhibit [D-Bus API](https://www.freedesktop.org/software/systemd/man/latest/org.freedesktop.login1.html) | Block idle/sleep/shutdown while the inhibitor FD or lease is open — common for CLI tools and headless use. |
-| `org.freedesktop.ScreenSaver` / Portal “inhibit” | Session-level idle inhibition when a desktop and D-Bus are available. |
-| **Tray** | `tray-icon` already supports GTK on Linux; same Quit UX as macOS once idle is wired. |
+**Tray**
 
-**Challenges**
+- `tray-icon` + `tao` GTK backend; same Quit UX as macOS.
 
-- Wayland vs X11: where inhibition is exposed (portal vs legacy APIs) differs.
+**Requirements**
+
+- systemd/logind and D-Bus system bus must be available (standard on Debian, Ubuntu, Fedora, Arch, etc.).
+- GTK 3 development headers (`libgtk-3-dev` / `gtk3-devel`).
+- Ayatana AppIndicator (`libayatana-appindicator3-dev`) or legacy AppIndicator (`libappindicator3-dev`) for `tray-icon`.
+- `libxdo-dev` — required by `tray-icon` on Linux (X11 event injection).
+
+**Limitations**
+
+- Non-systemd distros (Alpine musl, Void without runit-logind, etc.) are not supported; `prevent_idle()` will return `IdleError::System` at runtime.
 
 
 ## Windows (not planned here yet)

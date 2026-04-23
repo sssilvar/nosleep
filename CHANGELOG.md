@@ -1,3 +1,9 @@
+# [0.3.0] - TBD
+
+### Added
+
+- Linux idle sleep prevention via systemd-logind D-Bus `Inhibit` (`idle:sleep`, `block` mode). The inhibitor fd is held open for the process lifetime and released automatically on exit or crash.
+
 # [0.2.0] - 2026-04-23
 
 ### Fixed
