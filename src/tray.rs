@@ -50,7 +50,7 @@ pub fn run_until(until: Option<Instant>) -> ! {
             Event::NewEvents(StartCause::Init) => {
                 match TrayIconBuilder::new()
                     .with_menu(Box::new(menu.clone()))
-                    .with_tooltip("nosleep — preventing idle sleep")
+                    .with_tooltip("nosleep — preventing idle sleep and display sleep")
                     .with_icon(icon.clone())
                     .build()
                 {

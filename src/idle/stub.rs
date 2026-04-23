@@ -3,6 +3,6 @@
 
 use super::{IdleError, IdleGuard};
 
-pub fn prevent_user_idle_system_sleep() -> Result<IdleGuard, IdleError> {
+pub fn prevent_idle() -> Result<IdleGuard, IdleError> {
     Err(IdleError::UnsupportedPlatform)
 }

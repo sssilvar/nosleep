@@ -45,9 +45,9 @@ unsafe fn cf_string(s: &str) -> Result<CFStringRef, IdleError> {
 }
 
 /// Holds `PreventUserIdleSystemSleep` until dropped (same idea as `caffeinate -i`).
-pub fn prevent_user_idle_system_sleep() -> Result<IdleGuard, IdleError> {
+pub fn prevent_idle() -> Result<IdleGuard, IdleError> {
     unsafe {
-        let typ = cf_string("PreventUserIdleSystemSleep")?;
+        let typ = cf_string("PreventUserIdleDisplaySleep")?;
         let name = cf_string("nosleep")?;
         let mut id = 0u32;
         let ret = IOPMAssertionCreateWithName(typ, K_IOPM_ASSERTION_LEVEL_ON, name, &mut id);

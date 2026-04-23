@@ -1,4 +1,4 @@
-//! `nosleep` — `PreventUserIdleSystemSleep` IOPM assertion (macOS). Menu bar icon while active (like Docker).
+//! `nosleep` — `PreventUserIdleDisplaySleep` IOPM assertion (macOS). Menu bar icon while active (like Docker).
 mod idle;
 mod tray;
 
@@ -19,6 +19,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .minutes
         .map(|m| Instant::now() + Duration::from_secs(m.saturating_mul(60)));
 
-    let _idle = idle::prevent_user_idle_system_sleep()?;
+    let _idle = idle::prevent_idle()?;
     tray::run_until(until);
 }
