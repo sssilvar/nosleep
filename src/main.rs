@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use clap::Parser;
 
 #[derive(Parser)]
-#[command(name = "nosleep")]
+#[command(name = "nosleep", version)]
 struct Args {
     /// Stop after N minutes (omit = run until Quit from menu bar)
     minutes: Option<u64>,
