@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v0.3.0)'
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux-x86_64:
+    name: Release linux-x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            pkg-config \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            libdbus-1-dev \
+            libxdo-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build (release)
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      - name: Package tarball
+        id: pkg
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          NAME="nosleep-${TAG}-x86_64-unknown-linux-gnu"
+          mkdir -p "dist/${NAME}"
+          cp target/x86_64-unknown-linux-gnu/release/nosleep "dist/${NAME}/"
+          cp README.md LICENSE "dist/${NAME}/" 2>/dev/null || true
+          tar -C dist -czf "dist/${NAME}.tar.gz" "${NAME}"
+          ( cd dist && sha256sum "${NAME}.tar.gz" > "${NAME}.tar.gz.sha256" )
+          echo "tarball=dist/${NAME}.tar.gz" >> "$GITHUB_OUTPUT"
+          echo "sha256=dist/${NAME}.tar.gz.sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nosleep-linux-x86_64-release
+          path: |
+            ${{ steps.pkg.outputs.tarball }}
+            ${{ steps.pkg.outputs.sha256 }}
+          if-no-files-found: error
+
+      - name: Create / update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: ${{ github.event.inputs.tag || github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            ${{ steps.pkg.outputs.tarball }}
+            ${{ steps.pkg.outputs.sha256 }}
