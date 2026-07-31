@@ -26,6 +26,9 @@ pub struct IdleGuard {
     /// Logind inhibitor fd — kept alive until drop.
     #[cfg(target_os = "linux")]
     pub(super) _fd: zbus::zvariant::OwnedFd,
+    /// Screensaver inhibit — released when the session connection drops.
+    #[cfg(target_os = "linux")]
+    pub(super) _screensaver: Option<zbus::blocking::Connection>,
     #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     pub(super) _private: (),
 }

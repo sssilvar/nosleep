@@ -1,4 +1,6 @@
-//! logind `Inhibit` — holds an `idle` inhibitor fd for the process lifetime.
+//! logind `Inhibit` — holds an `idle` inhibitor fd for the process lifetime,
+//! plus an `org.freedesktop.ScreenSaver` inhibit (logind's idle lock does not
+//! stop GNOME/KDE from blanking and locking the screen).
 
 use zbus::blocking::Connection;
 use zbus::zvariant::OwnedFd;
@@ -24,5 +26,23 @@ pub fn prevent_idle() -> Result<IdleGuard, IdleError> {
         .deserialize()
         .map_err(|_| IdleError::System("unexpected reply from logind"))?;
 
-    Ok(IdleGuard { _fd: fd })
+    Ok(IdleGuard {
+        _fd: fd,
+        _screensaver: inhibit_screensaver(),
+    })
+}
+
+/// Session-bus screensaver inhibit; the lock lives as long as this connection.
+/// Absent on bare WMs, so failure is not fatal.
+fn inhibit_screensaver() -> Option<Connection> {
+    let conn = Connection::session().ok()?;
+    conn.call_method(
+        Some("org.freedesktop.ScreenSaver"),
+        "/org/freedesktop/ScreenSaver",
+        Some("org.freedesktop.ScreenSaver"),
+        "Inhibit",
+        &("nosleep", "nosleep is active"),
+    )
+    .ok()?;
+    Some(conn)
 }

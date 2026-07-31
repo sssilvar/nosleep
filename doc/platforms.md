@@ -25,8 +25,10 @@ Design: one small **idle** module per OS (see `src/idle/`), same CLI and tray UX
 
 **Idle sleep**
 
-- [systemd-logind](https://www.freedesktop.org/software/systemd/man/latest/org.freedesktop.login1.html) D-Bus `Inhibit` call with `what=idle`, `mode=block` — same scope as macOS's `PreventUserIdleDisplaySleep` (does not block explicit `systemctl suspend`).
+- [systemd-logind](https://www.freedesktop.org/software/systemd/man/latest/org.freedesktop.login1.html) D-Bus `Inhibit` call with `what=idle`, `mode=block` (does not block explicit `systemctl suspend`).
 - The inhibitor file descriptor is held open for the process lifetime (via `zbus` blocking API). Closing it — including on crash — automatically releases the lock.
+- Additionally an `org.freedesktop.ScreenSaver` `Inhibit` on the **session** bus: logind's `idle` lock only suppresses logind's own `IdleAction`, so without this the desktop (GNOME/KDE) still blanks and locks the screen on its own timer. The lock lives as long as the session-bus connection, kept in the guard.
+- Bare window managers with no screensaver service: the session inhibit is skipped, logind inhibit still applies. Check with `gdbus call --session --dest org.gnome.SessionManager --object-path /org/gnome/SessionManager --method org.gnome.SessionManager.IsInhibited 8`.
 
 **Tray**
 
