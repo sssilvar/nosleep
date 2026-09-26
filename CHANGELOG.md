@@ -1,5 +1,9 @@
 # [0.3.0] - TBD
 
+### Changed
+
+- Retain CI binaries for 30 days and temporary release artifacts for 3 days; published release downloads remain available.
+
 ### Added
 
 - Linux idle sleep prevention via systemd-logind D-Bus `Inhibit` (`idle:sleep`, `block` mode). The inhibitor fd is held open for the process lifetime and released automatically on exit or crash.
